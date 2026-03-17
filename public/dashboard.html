@@ -1,1 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* BACKGROUND */
+body {
+  min-height: 100vh;
+  background: url("https://images.unsplash.com/photo-1562774053-701939374585") no-repeat center/cover;
+  color: white;
+}
+
+/* OVERLAY */
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 0;
+}
+
+/* HEADER */
+header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 20px;
+}
+
+header h1 {
+  font-size: 28px;
+}
+
+header p {
+  opacity: 0.8;
+}
+
+/* LOGOUT */
+.logout {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  background: #ff4b2b;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+/* CONTAINER */
+.container {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  max-width: 900px;
+  margin: auto;
+  margin-top: 20px;
+}
+
+/* CARD */
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+/* SEARCH */
+.search-box {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 25px;
+  border: none;
+  outline: none;
+}
+
+/* BUTTON */
+button {
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+}
+
+.search-btn {
+  background: #00c6ff;
+  color: white;
+}
+
+.delete-btn {
+  background: #ff4b2b;
+  color: white;
+}
+
+.edit-btn {
+  background: gold;
+}
+
+/* ADD LINK */
+.add-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #00c6ff;
+}
+
+/* STUDENT */
+.student-card {
+  text-align: center;
+}
+
+.student-photo {
+  width: 140px;
+  height: 140px;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid div {
+  background: rgba(255,255,255,0.2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box {
+    flex-direction: column;
+  }
+
+  .logout {
+    position: static;
+    margin-top: 10px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🎓 Student Management Dashboard</h1>
+  <p>Admin Panel</p>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+
+  <!-- SEARCH -->
+  <div class="card">
+    <h2>🔍 Search Student</h2>
+    <form onsubmit="searchStudent(event)">
+      <div class="search-box">
+        <input type="text" id="searchRegNo" placeholder="Enter Register Number" required>
+        <button class="search-btn">Search</button>
+      </div>
+    </form>
+
+    <a href="/add-student.html" class="add-link">+ Add Student</a>
+  </div>
+
+  <!-- DETAILS -->
+  <div class="card" id="detailsSection" style="display:none;">
+    <h2>📄 Student Details</h2>
+    <div id="result"></div>
+  </div>
+
+</div>
+
+<script>
+
+async function searchStudent(event){
+  event.preventDefault();
+
+  const regNo=document.getElementById("searchRegNo").value;
+
+  const res=await fetch("/student/"+regNo);
+  const data=await res.json();
+
+  const result=document.getElementById("result");
+  document.getElementById("detailsSection").style.display="block";
+
+  if(data.message==="Not Found"){
+    result.innerHTML="<p style='color:red'>Student Not Found</p>";
+    return;
+  }
+
+  result.innerHTML=`
+    <div class="student-card">
+      ${data.photo ? `<img src="/uploads/${data.photo}" class="student-photo">` : ""}
+    </div>
+
+    <div class="grid">
+      <div><b>Name:</b> ${data.name}</div>
+      <div><b>Reg No:</b> ${data.registerNo}</div>
+      <div><b>Phone:</b> ${data.phone}</div>
+      <div><b>Parent:</b> ${data.parentPhone}</div>
+      <div><b>DOB:</b> ${data.dob}</div>
+      <div><b>Blood:</b> ${data.bloodGroup}</div>
+      <div><b>Attendance:</b> ${data.attendancePercentage}%</div>
+      <div><b>Semester:</b> ${data.semesterPercentage}%</div>
+      <div style="grid-column:1/3"><b>Address:</b> ${data.address}</div>
+    </div>
+
+    <br>
+
+    <button class="delete-btn" onclick="deleteStudent('${data.registerNo}')">Delete</button>
+
+<a href="/edit-student.html?regNo=${data.registerNo}">
+  <button class="edit-btn">Edit</button>
+</a>
+  `;
+}
+
+async function deleteStudent(regNo){
+  if(!confirm("Delete student?")) return;
+
+  await fetch("/delete-student/"+regNo,{method:"DELETE"});
+  alert("Deleted Successfully");
+  document.getElementById("detailsSection").style.display="none";
+}
+
+function logout(){
+  window.location.href="/login.html";
+}
+
+</script>
+
+</body>
+</html>
