@@ -1,1 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Student</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  margin:0;
+  background:linear-gradient(135deg,#1d2671,#c33764);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.container{
+  background:white;
+  padding:30px;
+  border-radius:15px;
+  width:95%;
+  max-width:900px;
+}
+
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+input,select,textarea{
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  width:100%;
+}
+
+.full{
+  grid-column:1/3;
+}
+
+button{
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:#2a5298;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.file-box{
+  border:2px dashed #2a5298;
+  padding:15px;
+  text-align:center;
+  border-radius:10px;
+}
+
+#preview img{
+  width:120px;
+  margin-top:10px;
+  border-radius:10px;
+}
+
+@media(max-width:768px){
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+  .full{
+    grid-column:1;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>✏️ Edit Student</h2>
+
+<form id="editForm" enctype="multipart/form-data">
+
+<div class="form-grid">
+
+<input type="text" id="name" placeholder="Name">
+<input type="text" id="registerNo" placeholder="Register No" readonly>
+
+<input type="text" id="phone" placeholder="Phone">
+<input type="text" id="parentPhone" placeholder="Parent Phone">
+
+<input type="email" id="email" placeholder="Email">
+
+<select id="gender">
+<option value="">Gender</option>
+<option>Male</option>
+<option>Female</option>
+</select>
+
+<input type="text" id="fatherName" placeholder="Father Name">
+<input type="text" id="motherName" placeholder="Mother Name">
+
+<input type="date" id="dob">
+
+<select id="bloodGroup">
+<option value="">Blood Group</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>O+</option><option>O-</option>
+<option>AB+</option><option>AB-</option>
+</select>
+
+<input type="text" id="caste" placeholder="Caste">
+<input type="text" id="religion" placeholder="Religion">
+
+<input type="number" id="attendancePercentage" placeholder="Attendance %">
+<input type="number" id="semesterPercentage" placeholder="Semester %">
+
+<input type="text" id="course" placeholder="Course">
+
+<textarea id="address" placeholder="Address" class="full"></textarea>
+
+<!-- PHOTO -->
+<div class="file-box full">
+<label>Update Photo</label><br><br>
+<input type="file" id="photo">
+
+<div id="preview"></div>
+</div>
+
+<button type="submit" class="full">Update Student</button>
+
+</div>
+</form>
+</div>
+
+<script>
+
+// GET REG NO
+const params=new URLSearchParams(window.location.search);
+const regNo=params.get("regNo");
+
+// LOAD DATA
+async function loadData(){
+  const res=await fetch("/student/"+regNo);
+  const data=await res.json();
+
+  document.getElementById("name").value=data.name||"";
+  document.getElementById("registerNo").value=data.registerNo||"";
+  document.getElementById("phone").value=data.phone||"";
+  document.getElementById("parentPhone").value=data.parentPhone||"";
+  document.getElementById("email").value=data.email||"";
+  document.getElementById("gender").value=data.gender||"";
+  document.getElementById("fatherName").value=data.fatherName||"";
+  document.getElementById("motherName").value=data.motherName||"";
+  document.getElementById("dob").value=data.dob||"";
+  document.getElementById("bloodGroup").value=data.bloodGroup||"";
+  document.getElementById("caste").value=data.caste||"";
+  document.getElementById("religion").value=data.religion||"";
+  document.getElementById("attendancePercentage").value=data.attendancePercentage||"";
+  document.getElementById("semesterPercentage").value=data.semesterPercentage||"";
+  document.getElementById("course").value=data.course||"";
+  document.getElementById("address").value=data.address||"";
+
+  if(data.photo){
+    document.getElementById("preview").innerHTML=
+      `<img src="/uploads/${data.photo}">`;
+  }
+}
+
+loadData();
+
+// IMAGE PREVIEW
+document.getElementById("photo").addEventListener("change",function(e){
+  const file=e.target.files[0];
+  if(file){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      document.getElementById("preview").innerHTML=
+        `<img src="${e.target.result}">`;
+    }
+    reader.readAsDataURL(file);
+  }
+});
+
+// UPDATE
+document.getElementById("editForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+
+  const formData=new FormData();
+
+  formData.append("name",document.getElementById("name").value);
+  formData.append("phone",document.getElementById("phone").value);
+  formData.append("parentPhone",document.getElementById("parentPhone").value);
+  formData.append("email",document.getElementById("email").value);
+  formData.append("gender",document.getElementById("gender").value);
+  formData.append("fatherName",document.getElementById("fatherName").value);
+  formData.append("motherName",document.getElementById("motherName").value);
+  formData.append("dob",document.getElementById("dob").value);
+  formData.append("bloodGroup",document.getElementById("bloodGroup").value);
+  formData.append("caste",document.getElementById("caste").value);
+  formData.append("religion",document.getElementById("religion").value);
+  formData.append("attendancePercentage",document.getElementById("attendancePercentage").value);
+  formData.append("semesterPercentage",document.getElementById("semesterPercentage").value);
+  formData.append("course",document.getElementById("course").value);
+  formData.append("address",document.getElementById("address").value);
+
+  const file=document.getElementById("photo").files[0];
+  if(file){
+    formData.append("photo",file);
+  }
+
+  const res=await fetch("/update-student/"+regNo,{
+    method:"PUT",
+    body:formData
+  });
+
+  const data=await res.json();
+  alert(data.message);
+
+  window.location.href="/dashboard.html";
+});
+
+</script>
+
+</body>
+</html>
