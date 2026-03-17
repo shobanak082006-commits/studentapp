@@ -1,0 +1,28 @@
+{
+  "name": "sms",
+  "version": "1.0.0",
+  "description": "Admin Based Student Management System",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "Shobana",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "express-session": "^1.19.0",
+    "mongoose": "^7.8.9",
+    "multer": "^1.4.5-lts.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shobana08/sms-2.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/shobana08/sms-2/issues"
+  },
+  "homepage": "https://github.com/shobana08/sms-2#readme"
+}
