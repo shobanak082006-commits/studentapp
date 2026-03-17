@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use(session({
-  secret: "sms-secret-key",
+  secret: process.env.SESSION_SECRET || "sms-secret-key",
   resave: false,
   saveUninitialized: true
 }));
@@ -25,7 +25,7 @@ app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
 /* ===========================
-   AUTH MIDDLEWARE
+   AUTH
 =========================== */
 function isLoggedIn(req, res, next) {
   if (req.session.admin) return next();
@@ -40,11 +40,11 @@ app.get("/", (req, res) => {
 });
 
 /* ===========================
-   DB CONNECT
+   DB CONNECT (RENDER READY)
 =========================== */
-mongoose.connect("mongodb://127.0.0.1:27017/studentDB")
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch(err => console.log("DB Error:", err));
 
 /* ===========================
    SCHEMA
@@ -79,7 +79,7 @@ const adminSchema = new mongoose.Schema({
 const Admin = mongoose.model("Admin", adminSchema);
 
 /* ===========================
-   ADD ADMIN (RUN ONCE)
+   CREATE ADMIN (RUN ONCE)
 =========================== */
 async function createAdmin() {
   const exist = await Admin.findOne({ phone: "admin" });
@@ -89,7 +89,7 @@ async function createAdmin() {
     console.log("Admin created");
   }
 }
-createAdmin();
+createAdmin(); // First deploy ku ok
 
 /* ===========================
    MULTER
@@ -106,14 +106,20 @@ const upload = multer({ storage });
 app.post("/login", async (req, res) => {
   const { phone, password } = req.body;
 
-  const admin = await Admin.findOne({ phone });
-  if (!admin) return res.send("Invalid");
+  try {
+    const admin = await Admin.findOne({ phone });
+    if (!admin) return res.send("Invalid Login");
 
-  const match = await bcrypt.compare(password, admin.password);
-  if (!match) return res.send("Invalid");
+    const match = await bcrypt.compare(password, admin.password);
+    if (!match) return res.send("Invalid Login");
 
-  req.session.admin = true;
-  res.redirect("/dashboard");
+    req.session.admin = true;
+    res.redirect("/dashboard");
+
+  } catch (err) {
+    console.log(err);
+    res.send("Error");
+  }
 });
 
 /* ===========================
@@ -160,9 +166,13 @@ app.post("/add-student", upload.single("photo"), async (req, res) => {
    GET STUDENT
 =========================== */
 app.get("/student/:regNo", async (req, res) => {
-  const data = await Student.findOne({ registerNo: req.params.regNo });
-  if (!data) return res.json({ message: "Not Found" });
-  res.json(data);
+  try {
+    const data = await Student.findOne({ registerNo: req.params.regNo });
+    if (!data) return res.json({ message: "Not Found" });
+    res.json(data);
+  } catch (err) {
+    res.json({ message: "Error" });
+  }
 });
 
 /* ===========================
@@ -192,11 +202,16 @@ app.put("/update-student/:regNo", upload.single("photo"), async (req, res) => {
    DELETE STUDENT
 =========================== */
 app.delete("/delete-student/:regNo", async (req, res) => {
-  await Student.findOneAndDelete({ registerNo: req.params.regNo });
-  res.json({ message: "Deleted Successfully" });
+  try {
+    await Student.findOneAndDelete({ registerNo: req.params.regNo });
+    res.json({ message: "Deleted Successfully" });
+  } catch (err) {
+    res.json({ message: "Error" });
+  }
 });
 
 /* ===========================
-   START SERVER
+   SERVER START (RENDER READY)
 =========================== */
-app.listen(5000, () => console.log("Server running on 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log("Server running on", PORT));
